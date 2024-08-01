@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery and Fuel Savings Calculator</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            padding: 0 10px; 
+            text-align: center;
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: left; 
+        }
+        th { 
+            background-color: #f2f2f2; 
+        }
+        input, select { 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
+        #results { 
+            margin-top: 20px; 
+        }
+        .result-section { 
+            margin-bottom: 20px; 
+        }
+        .calculated { 
+            background-color: #e6f3ff; 
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 20px;
+            max-width: 200px;
+            height: auto;
+        }
+        h2 {
+            margin-bottom: 20px;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            body {
+                padding: 0 5px;
+            }
+            table {
+                width: 100%;
+                margin: 0;
+            }
+            th, td {
+                font-size: 14px;
+                padding: 6px;
+            }
+            h2 {
+                font-size: 18px;
+            }
+            #results h3 {
+                font-size: 16px;
+            }
+            button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <img src="TERMACO_Vert_Bilingue_H.jpg" alt="Company Logo" class="logo">
+    <h2>Battery and Fuel Savings Calculator</h2>
+    <table>
+        <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Battery Capacity (kWh)</td>
+            <td><input type="number" id="batteryCapacity"></td>
+        </tr>
+        <tr>
+            <td>Depth of Discharge (%)</td>
+            <td><input type="number" id="dod"></td>
+        </tr>
+        <tr>
+            <td>Average Load (kW)</td>
+            <td><input type="number" id="avgLoad" oninput="updateChargingPower()"></td>
+        </tr>
+        <tr>
+            <td>Inverter Efficiency (%)</td>
+            <td><input type="number" id="inverterEfficiency"></td>
+        </tr>
+        <tr>
+            <td>Charging Power (kW)</td>
+            <td><input type="number" id="chargingPower" readonly class="calculated"></td>
+        </tr>
+        <tr>
+            <td>Charging Efficiency (%)</td>
+            <td><input type="number" id="chargingEfficiency"></td>
+        </tr>
+        <tr>
+            <td>Genset Max Capacity (kW)</td>
+            <td><input type="number" id="gensetMax" oninput="updateChargingPower()"></td>
+        </tr>
+        <tr>
+            <td>Genset-only Fuel Consumption</td>
+            <td>
+                <input type="number" id="gensetOnlyFuel">
+                <select id="gensetOnlyFuelUnit">
+                    <option value="L">L/hour</option>
+                    <option value="gal">gal/hour</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>Hybrid Genset Fuel Consumption</td>
+            <td>
+                <input type="number" id="hybridGensetFuel">
+                <select id="hybridGensetFuelUnit">
+                    <option value="L">L/hour</option>
+                    <option value="gal">gal/hour</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+
+    <button onclick="calculate()">Calculate</button>
+
+    <div id="results"></div>
+
+    <script>
+        const LITERS_PER_GALLON = 3.78541;
+
+        function convertToLiters(value, unit) {
+            return unit === 'gal' ? value * LITERS_PER_GALLON : value;
+        }
+
+        function convertFromLiters(value, unit) {
+            return unit === 'gal' ? value / LITERS_PER_GALLON : value;
+        }
+
+        function updateChargingPower() {
+            const gensetMax = parseFloat(document.getElementById('gensetMax').value) || 0;
+            const avgLoad = parseFloat(document.getElementById('avgLoad').value) || 0;
+            const chargingPower = Math.max(0, gensetMax - avgLoad);
+            document.getElementById('chargingPower').value = chargingPower.toFixed(2);
+        }
+
+        function calculate() {
+            // Get input values
+            const batteryCapacity = parseFloat(document.getElementById('batteryCapacity').value) || 0;
+            const dod = parseFloat(document.getElementById('dod').value) / 100 || 0;
+            const avgLoad = parseFloat(document.getElementById('avgLoad').value) || 0;
+            const inverterEfficiency = parseFloat(document.getElementById('inverterEfficiency').value) / 100 || 0;
+            const chargingPower = parseFloat(document.getElementById('chargingPower').value) || 0;
+            const chargingEfficiency = parseFloat(document.getElementById('chargingEfficiency').value) / 100 || 0;
+            const gensetMax = parseFloat(document.getElementById('gensetMax').value) || 0;
+
+            const gensetOnlyFuel = parseFloat(document.getElementById('gensetOnlyFuel').value) || 0;
+            const gensetOnlyFuelUnit = document.getElementById('gensetOnlyFuelUnit').value;
+            const hybridGensetFuel = parseFloat(document.getElementById('hybridGensetFuel').value) || 0;
+            const hybridGensetFuelUnit = document.getElementById('hybridGensetFuelUnit').value;
+
+            // Convert fuel consumption to liters
+            const gensetOnlyFuelLiters = convertToLiters(gensetOnlyFuel, gensetOnlyFuelUnit);
+            const hybridGensetFuelLiters = convertToLiters(hybridGensetFuel, hybridGensetFuelUnit);
+
+            // Calculate battery supply hours
+            const supplyHoursPerCycle = (batteryCapacity * dod) / (avgLoad / inverterEfficiency);
+            
+            // Calculate charging time
+            const energyToCharge = batteryCapacity * dod;
+            const chargingTime = energyToCharge / (chargingPower * chargingEfficiency);
+
+            const totalCycleTime = supplyHoursPerCycle + chargingTime;
+            const cyclesPerDay = 24 / totalCycleTime;
+            const supplyHoursPerDay = supplyHoursPerCycle * cyclesPerDay;
+
+            // Calculate fuel savings
+            const gensetOnlyConsumption = 24 * gensetOnlyFuelLiters;
+            const hybridConsumption = (24 - supplyHoursPerDay) * hybridGensetFuelLiters;
+            const fuelSavings = gensetOnlyConsumption - hybridConsumption;
+            const savingsPercentage = (fuelSavings / gensetOnlyConsumption) * 100;
+
+            // Convert results back to the selected unit
+            const fuelUnit = gensetOnlyFuelUnit;
+            const gensetOnlyConsumptionConverted = convertFromLiters(gensetOnlyConsumption, fuelUnit);
+            const hybridConsumptionConverted = convertFromLiters(hybridConsumption, fuelUnit);
+            const fuelSavingsConverted = convertFromLiters(fuelSavings, fuelUnit);
+
+            // Display results
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <div class="result-section">
+                    <h3>Battery Supply Calculations:</h3>
+                    <p>Supply Hours Per Cycle: ${supplyHoursPerCycle.toFixed(2)} hours</p>
+                    <p>Charging Time: ${chargingTime.toFixed(2)} hours</p>
+                    <p>Total Cycle Time: ${totalCycleTime.toFixed(2)} hours</p>
+                    <p>Cycles Per Day: ${cyclesPerDay.toFixed(2)}</p>
+                    <p>Supply Hours Per Day: ${supplyHoursPerDay.toFixed(2)} hours</p>
+                </div>
+                <div class="result-section">
+                    <h3>Fuel Savings Calculations:</h3>
+                    <p>Genset-only Fuel Consumption: ${gensetOnlyConsumptionConverted.toFixed(2)} ${fuelUnit}/day</p>
+                    <p>Hybrid System Fuel Consumption: ${hybridConsumptionConverted.toFixed(2)} ${fuelUnit}/day</p>
+                    <p>Fuel Savings: ${fuelSavingsConverted.toFixed(2)} ${fuelUnit}/day</p>
+                    <p>Savings Percentage: ${savingsPercentage.toFixed(2)}%</p>
+                </div>
+            `;
+        }
+
+        // Initial calculation of charging power
+        updateChargingPower();
+    </script>
+</body>
+</html>
